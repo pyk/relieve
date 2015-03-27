@@ -15,8 +15,10 @@
 
 3. Build & run it
     
+    ```
     go install
     relieve
+    ```
 
 4. start testing endpoint
 

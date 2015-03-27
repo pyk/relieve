@@ -18,7 +18,7 @@
     ```
     go install
     relieve
-    ```
+    ``` 
 
 4. start testing endpoint
 
@@ -29,3 +29,22 @@
     ```
     curl -i -H "Accept: application/json" -X POST -d '{"user_email":"test2", "user_gender":"male", "user_age":"17", "user_profession":"student"}' http://localhost:8080/v0/users
     ```
+
+## Deploy to heroku
+
+Create app with custom buildpack
+
+    heroku apps:create relieve-endpoint -b https://github.com/kr/heroku-buildpack-go.git
+    echo 'web: relieve' > Procfile
+
+Push code to heroku
+
+    godep save
+    git add . && git commit -m "deploy to heroku"
+    git push heroku master
+
+Make sure [godep][godep] installed
+
+    go get github.com/tools/godep
+
+[godep]: https://github.com/tools/godep

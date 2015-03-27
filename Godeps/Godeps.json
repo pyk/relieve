@@ -1,6 +1,6 @@
 {
-	"ImportPath": "github.com/pyk/wisdom",
-	"GoVersion": "go1.3.3",
+	"ImportPath": "github.com/pyk/relieve",
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "github.com/gorilla/context",

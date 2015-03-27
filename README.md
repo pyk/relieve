@@ -4,8 +4,6 @@
 
 1. setup postgres database with the following [schema][schema]
 
-[schema]: https://github.com/pyk/relieve/blob/master/database/schema.sql
-
 2. export port and datatabase environment variable
     
     ```
@@ -36,6 +34,7 @@ Create app with custom buildpack
 
     heroku apps:create relieve-endpoint -b https://github.com/kr/heroku-buildpack-go.git
     echo 'web: relieve' > Procfile
+    heroku addons:add heroku-postgresql
 
 Push code to heroku
 
@@ -48,3 +47,11 @@ Make sure [godep][godep] installed
     go get github.com/tools/godep
 
 [godep]: https://github.com/tools/godep
+
+Update heroku database
+
+    heroku pg:psql
+
+and create the following [schema][schema]
+
+[schema]: https://github.com/pyk/relieve/blob/master/database/schema.sql

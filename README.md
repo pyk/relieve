@@ -25,7 +25,13 @@
 1. users endpoint
     
     ```
-    curl -i -H "Accept: application/json" -X POST -d '{"user_email":"test2", "user_gender":"male", "user_age":"17", "user_profession":"student"}' http://localhost:8080/v0/users
+    curl -i -H "Accept: application/json" -X POST -d '{"user_email":"test", "user_gender":"male", "user_age":17, "user_profession":"student"}' http://localhost:8080/v0/users
+    ```
+
+2. psikolog endpoint
+    
+    ```
+    curl -i -H "Accept: application/json" -X POST -d '{"psikolog_email":"test", "psikolog_name":"Prof. huru hara", "psikolog_image_url":"", "psikolog_wisdom":12, "psikolog_bio":"biography"}' http://localhost:8080/v0/psikologs
     ```
 
 ## Deploy to heroku
@@ -55,3 +61,10 @@ Update heroku database
 and create the following [schema][schema]
 
 [schema]: https://github.com/pyk/relieve/blob/master/database/schema.sql
+
+## Database
+
+Change column type `text` to `integer`
+
+    ALTER TABLE psikologs
+        ALTER COLUMN psikolog_wisdom TYPE integer USING cast(psikolog_wisdom as int);

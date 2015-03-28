@@ -63,6 +63,40 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
+// psikologHandler handle psikolog endpoint
+func psikologHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "https://sundaycode.co", 302)
+		return nil
+	}
+
+	// read data from POST request and decode data to User type
+	var p *database.Psikolog
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&p)
+	if err != nil {
+		return &apiError{
+			"psikologHandler Decode",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	// insert data to database
+	err = db.InsertPsikolog(p)
+	if err != nil {
+		return &apiError{
+			"psikologHandler db.InsertPsikolog",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	return nil
+}
+
 // userHandler handle user endpoint
 func userHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	if r.Method != "POST" {
@@ -131,6 +165,10 @@ func main() {
 	// insert data to users table
 	// POST /v0/users
 	r.Handle("/v0/users", ApiHandler(userHandler))
+
+	// insert data to psikologs table
+	// POST /v0/psikolog
+	r.Handle("/v0/psikologs", ApiHandler(psikologHandler))
 
 	// server listener
 	http.Handle("/", r)

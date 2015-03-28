@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS psikologs (
     psikolog_email text NOT NULL UNIQUE,
     psikolog_name text,
     psikolog_image_url text,
-    psikolog_wisdom text,
+    psikolog_wisdom integer,
     psikolog_bio text
 );
 

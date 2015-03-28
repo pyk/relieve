@@ -31,7 +31,19 @@
 2. psikolog endpoint
     
     ```
-    curl -i -H "Accept: application/json" -X POST -d '{"psikolog_email":"test", "psikolog_name":"Prof. huru hara", "psikolog_image_url":"", "psikolog_wisdom":12, "psikolog_bio":"biography"}' http://localhost:8080/v0/psikologs
+    curl -i -H "Accept: application/json" -X POST -d '{"psikolog_email":"test", "psikolog_name":"Prof. huru hara", "psikolog_image_url":"", "psikolog_bio":"biography"}' http://localhost:8080/v0/psikologs
+    ```
+
+3. post endpoint
+    
+    ```
+    curl -i -H "Accept: application/json" -X POST -d '{"post_user_id":1, "post_psikolog_id":1, "post_title":"curhat nih", "post_category":"curhat", "post_content": "sample content", "post_image_url":""}' http://localhost:8080/v0/posts
+    ```
+
+4. comment endpoint
+    
+    ```
+    curl -i -H "Accept: application/json" -X POST -d '{"comment_user_id":1, "comment_psikolog_id":1, "comment_post_id":1, "comment_text":"sample comment"}' http://localhost:8080/v0/comments
     ```
 
 ## Deploy to heroku
@@ -68,3 +80,15 @@ Change column type `text` to `integer`
 
     ALTER TABLE psikologs
         ALTER COLUMN psikolog_wisdom TYPE integer USING cast(psikolog_wisdom as int);
+
+    ALTER TABLE posts
+        ALTER COLUMN post_date SET DEFAULT CURRENT_TIMESTAMP;
+
+    ALTER TABLE psikologs
+        ALTER COLUMN psikolog_wisdom SET DEFAULT 0;
+    
+    ALTER TABLE posts
+        ALTER COLUMN post_report_count SET DEFAULT 0;
+    
+    ALTER TABLE comments
+        ALTER COLUMN comment_date SET DEFAULT CURRENT_TIMESTAMP;

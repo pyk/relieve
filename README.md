@@ -46,6 +46,13 @@
     curl -i -H "Accept: application/json" -X POST -d '{"comment_user_id":1, "comment_psikolog_id":1, "comment_post_id":1, "comment_text":"sample comment"}' http://localhost:8080/v0/comments
     ```
 
+5. report endpoint
+
+    
+    ```
+    curl -i -H "Accept: application/json" -X POST -d '{"report_user_id":1, "report_post_id":1}' http://localhost:8080/v0/reports
+    ```
+
 ## Deploy to heroku
 
 Create app with custom buildpack

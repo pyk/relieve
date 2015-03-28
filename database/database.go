@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	// "time"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -17,6 +17,8 @@ var (
 var (
 	stmtInsertUser     *sql.Stmt
 	stmtInsertPsikolog *sql.Stmt
+	stmtInsertPost     *sql.Stmt
+	stmtInsertComment  *sql.Stmt
 )
 
 type User struct {
@@ -37,24 +39,24 @@ type Psikolog struct {
 }
 
 type Post struct {
-	Id         int `json:"post_id"`
-	UserId     int `json:"post_user_id"`
-	PsikologId int `json:"post_psikolog_id"`
-	// Date        *time.Time `json:"post_date"`
-	Title       string `json:"post_title"`
-	Category    string `json:"post_category"`
-	Content     string `json:"post_content"`
-	ImageURL    string `json:"post_image_url"`
-	ReportCount int    `json:"post_report_count"`
+	Id          int        `json:"post_id"`
+	UserId      int        `json:"post_user_id"`
+	PsikologId  int        `json:"post_psikolog_id"`
+	Date        *time.Time `json:"post_date"`
+	Title       string     `json:"post_title"`
+	Category    string     `json:"post_category"`
+	Content     string     `json:"post_content"`
+	ImageURL    string     `json:"post_image_url"`
+	ReportCount int        `json:"post_report_count"`
 }
 
 type Comment struct {
-	Id         int    `json:"comment_id"`
-	UserId     int    `json:"comment_user_id"`
-	PsikologId int    `json:"comment_psikolog_id"`
-	PostId     int    `json:"comment_post_id"`
-	Text       string `json:"comment_text"`
-	// Date       *time.Time `json:"comment_date"`
+	Id         int        `json:"comment_id"`
+	UserId     int        `json:"comment_user_id"`
+	PsikologId int        `json:"comment_psikolog_id"`
+	PostId     int        `json:"comment_post_id"`
+	Text       string     `json:"comment_text"`
+	Date       *time.Time `json:"comment_date"`
 }
 
 type Report struct {
@@ -80,7 +82,19 @@ func New() (*Database, error) {
 	}
 
 	// insert psikolog statement
-	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_wisdom, psikolog_bio) VALUES ($1,$2,$3,$4,$5)`)
+	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_bio) VALUES ($1,$2,$3,$4)`)
+	if err != nil {
+		log.Printf("Error insert user statement: %v\n", err)
+	}
+
+	// insert post statement
+	stmtInsertPost, err = db.Prepare(`INSERT INTO posts(post_user_id, post_psikolog_id, post_title, post_category, post_content, post_image_url) VALUES ($1,$2,$3,$4,$5,$6)`)
+	if err != nil {
+		log.Printf("Error insert user statement: %v\n", err)
+	}
+
+	// insert comment statement
+	stmtInsertComment, err = db.Prepare(`INSERT INTO comments(comment_user_id, comment_psikolog_id, comment_post_id, comment_text) VALUES ($1,$2,$3,$4)`)
 	if err != nil {
 		log.Printf("Error insert user statement: %v\n", err)
 	}
@@ -95,7 +109,6 @@ func (db *Database) InsertUser(user *User) error {
 		log.Printf("Error while insert data to users table: %v\n", err)
 		return err
 	}
-	log.Println("Insert user: succed")
 	return nil
 }
 
@@ -106,6 +119,25 @@ func (db *Database) InsertPsikolog(p *Psikolog) error {
 		log.Printf("Error while insert data to psikologs table: %v\n", err)
 		return err
 	}
-	log.Println("Insert psikolog: succed")
+	return nil
+}
+
+func (db *Database) InsertPost(p *Post) error {
+	// insert data to database
+	_, err := stmtInsertPost.Exec(p.UserId, p.PsikologId, p.Title, p.Category, p.Content, p.ImageURL)
+	if err != nil {
+		log.Printf("Error while insert data to posts table: %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func (db *Database) InsertComment(c *Comment) error {
+	// insert data to database
+	_, err := stmtInsertComment.Exec(c.UserId, c.PsikologId, c.PostId, c.Text)
+	if err != nil {
+		log.Printf("Error while insert data to comments table: %v\n", err)
+		return err
+	}
 	return nil
 }

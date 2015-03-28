@@ -63,6 +63,74 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
+// commentHandler handle comment endpoint
+func commentHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "https://sundaycode.co", 302)
+		return nil
+	}
+
+	// read data from POST request and decode data to *database.Comment type
+	var c *database.Comment
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&c)
+	if err != nil {
+		return &apiError{
+			"commentHandler Decode",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	// insert data to database
+	err = db.InsertComment(c)
+	if err != nil {
+		return &apiError{
+			"commentHandler db.InsertComment",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	return nil
+}
+
+// postHandler handle post endpoint
+func postHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "https://sundaycode.co", 302)
+		return nil
+	}
+
+	// read data from POST request and decode data to *database.Post type
+	var p *database.Post
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&p)
+	if err != nil {
+		return &apiError{
+			"postHandler Decode",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	// insert data to database
+	err = db.InsertPost(p)
+	if err != nil {
+		return &apiError{
+			"postHandler db.InsertPost",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	return nil
+}
+
 // psikologHandler handle psikolog endpoint
 func psikologHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	if r.Method != "POST" {
@@ -70,7 +138,7 @@ func psikologHandler(w http.ResponseWriter, r *http.Request) *apiError {
 		return nil
 	}
 
-	// read data from POST request and decode data to User type
+	// read data from POST request and decode data to *database.Psikolog type
 	var p *database.Psikolog
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&p)
@@ -169,6 +237,14 @@ func main() {
 	// insert data to psikologs table
 	// POST /v0/psikolog
 	r.Handle("/v0/psikologs", ApiHandler(psikologHandler))
+
+	// insert data to posts table
+	// POST /v0/posts
+	r.Handle("/v0/posts", ApiHandler(postHandler))
+
+	// insert data to comments table
+	// POST /v0/comments
+	r.Handle("/v0/comments", ApiHandler(commentHandler))
 
 	// server listener
 	http.Handle("/", r)

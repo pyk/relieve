@@ -81,6 +81,8 @@ Change column type `text` to `integer`
     ALTER TABLE psikologs
         ALTER COLUMN psikolog_wisdom TYPE integer USING cast(psikolog_wisdom as int);
 
+Add default to existing columns
+
     ALTER TABLE posts
         ALTER COLUMN post_date SET DEFAULT CURRENT_TIMESTAMP;
 

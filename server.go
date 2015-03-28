@@ -63,6 +63,40 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
+// reportHandler handle report endpoint
+func reportHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "https://sundaycode.co", 302)
+		return nil
+	}
+
+	// read data from POST request and decode data to *database.Report type
+	var rp *database.Report
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&rp)
+	if err != nil {
+		return &apiError{
+			"commentHandler Decode",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	// insert data to database
+	err = db.InsertReport(rp)
+	if err != nil {
+		return &apiError{
+			"commentHandler db.InsertComment",
+			err,
+			"Internal server error",
+			http.StatusInternalServerError,
+		}
+	}
+
+	return nil
+}
+
 // commentHandler handle comment endpoint
 func commentHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	if r.Method != "POST" {
@@ -245,6 +279,10 @@ func main() {
 	// insert data to comments table
 	// POST /v0/comments
 	r.Handle("/v0/comments", ApiHandler(commentHandler))
+
+	// insert data to reports table
+	// POST /v0/reports
+	r.Handle("/v0/reports", ApiHandler(reportHandler))
 
 	// server listener
 	http.Handle("/", r)

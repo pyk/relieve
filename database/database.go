@@ -19,6 +19,7 @@ var (
 	stmtInsertPsikolog *sql.Stmt
 	stmtInsertPost     *sql.Stmt
 	stmtInsertComment  *sql.Stmt
+	stmtInsertReport   *sql.Stmt
 )
 
 type User struct {
@@ -84,19 +85,25 @@ func New() (*Database, error) {
 	// insert psikolog statement
 	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_bio) VALUES ($1,$2,$3,$4)`)
 	if err != nil {
-		log.Printf("Error insert user statement: %v\n", err)
+		log.Printf("Error insert psikolog statement: %v\n", err)
 	}
 
 	// insert post statement
 	stmtInsertPost, err = db.Prepare(`INSERT INTO posts(post_user_id, post_psikolog_id, post_title, post_category, post_content, post_image_url) VALUES ($1,$2,$3,$4,$5,$6)`)
 	if err != nil {
-		log.Printf("Error insert user statement: %v\n", err)
+		log.Printf("Error insert post statement: %v\n", err)
 	}
 
 	// insert comment statement
 	stmtInsertComment, err = db.Prepare(`INSERT INTO comments(comment_user_id, comment_psikolog_id, comment_post_id, comment_text) VALUES ($1,$2,$3,$4)`)
 	if err != nil {
-		log.Printf("Error insert user statement: %v\n", err)
+		log.Printf("Error insert comment statement: %v\n", err)
+	}
+
+	// insert report statement
+	stmtInsertReport, err = db.Prepare(`INSERT INTO reports(report_user_id, report_post_id) VALUES ($1,$2)`)
+	if err != nil {
+		log.Printf("Error insert report statement: %v\n", err)
 	}
 
 	return &Database{db}, nil
@@ -137,6 +144,16 @@ func (db *Database) InsertComment(c *Comment) error {
 	_, err := stmtInsertComment.Exec(c.UserId, c.PsikologId, c.PostId, c.Text)
 	if err != nil {
 		log.Printf("Error while insert data to comments table: %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func (db *Database) InsertReport(r *Report) error {
+	// insert data to database
+	_, err := stmtInsertReport.Exec(r.UserId, r.PostId)
+	if err != nil {
+		log.Printf("Error while insert data to reports table: %v\n", err)
 		return err
 	}
 	return nil

@@ -20,6 +20,8 @@ var (
 	stmtInsertPost     *sql.Stmt
 	stmtInsertComment  *sql.Stmt
 	stmtInsertReport   *sql.Stmt
+
+	stmtGetAllPosts *sql.Stmt
 )
 
 type User struct {
@@ -106,6 +108,12 @@ func New() (*Database, error) {
 		log.Printf("Error insert report statement: %v\n", err)
 	}
 
+	// get all posts
+	stmtGetAllPosts, err = db.Prepare(`SELECT * FROM posts`)
+	if err != nil {
+		log.Printf("Error get all posts statement: %v\n", err)
+	}
+
 	return &Database{db}, nil
 }
 
@@ -157,4 +165,24 @@ func (db *Database) InsertReport(r *Report) error {
 		return err
 	}
 	return nil
+}
+
+func (db *Database) GetAllPosts() ([]Post, error) {
+	var posts []Post
+	rows, err := stmtGetAllPosts.Query()
+	defer rows.Close()
+	if err != nil {
+		log.Printf("Error while get data all posts: %v\n", err)
+		return nil, err
+	}
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.Id, &post.UserId, &post.PsikologId, &post.Date, &post.Title, &post.Category, &post.Content, &post.ImageURL, &post.ReportCount)
+		if err != nil {
+			log.Printf("Error while iterating a rows on get all posts: %v\n", err)
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
 }

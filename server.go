@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -133,33 +134,57 @@ func commentHandler(w http.ResponseWriter, r *http.Request) *apiError {
 
 // postHandler handle post endpoint
 func postHandler(w http.ResponseWriter, r *http.Request) *apiError {
-	if r.Method != "POST" {
-		http.Redirect(w, r, "https://sundaycode.co", 302)
+	var p *database.Post
+	var posts []database.Post
+	var err error
+
+	if r.Method == "GET" {
+		posts, err = db.GetAllPosts()
+		if err != nil {
+			return &apiError{
+				"postHandler GetAllPosts",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+		enc := json.NewEncoder(w)
+		err = enc.Encode(posts)
+		if err != nil {
+			return &apiError{
+				"postHandler GetAllPosts encode JSON",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+
 		return nil
 	}
-
-	// read data from POST request and decode data to *database.Post type
-	var p *database.Post
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&p)
-	if err != nil {
-		return &apiError{
-			"postHandler Decode",
-			err,
-			"Internal server error",
-			http.StatusInternalServerError,
+	if r.Method == "POST" {
+		// read data from POST request and decode data to *database.Post type
+		decoder := json.NewDecoder(r.Body)
+		err = decoder.Decode(&p)
+		if err != nil {
+			return &apiError{
+				"postHandler Decode",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
 		}
-	}
 
-	// insert data to database
-	err = db.InsertPost(p)
-	if err != nil {
-		return &apiError{
-			"postHandler db.InsertPost",
-			err,
-			"Internal server error",
-			http.StatusInternalServerError,
+		// insert data to database
+		err = db.InsertPost(p)
+		if err != nil {
+			return &apiError{
+				"postHandler db.InsertPost",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
 		}
+		return nil
 	}
 
 	return nil
@@ -201,35 +226,38 @@ func psikologHandler(w http.ResponseWriter, r *http.Request) *apiError {
 
 // userHandler handle user endpoint
 func userHandler(w http.ResponseWriter, r *http.Request) *apiError {
-	if r.Method != "POST" {
-		http.Redirect(w, r, "https://sundaycode.co", 302)
+	var user *database.User
+	if r.Method == "GET" {
+		fmt.Fprintln(w, "200 OK")
 		return nil
 	}
+	if r.Method == "POST" {
+		// read data from POST request and decode data to User type
 
-	// read data from POST request and decode data to User type
-	var user *database.User
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&user)
-	if err != nil {
-		return &apiError{
-			"usersHandler Decode",
-			err,
-			"Internal server error",
-			http.StatusInternalServerError,
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&user)
+		if err != nil {
+			return &apiError{
+				"usersHandler Decode",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
 		}
-	}
 
-	// insert data to database
-	err = db.InsertUser(user)
-	if err != nil {
-		return &apiError{
-			"usersHandler db.InsertUser",
-			err,
-			"Internal server error",
-			http.StatusInternalServerError,
+		// insert data to database
+		err = db.InsertUser(user)
+		if err != nil {
+			return &apiError{
+				"usersHandler db.InsertUser",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
 		}
-	}
 
+		return nil
+	}
 	return nil
 }
 

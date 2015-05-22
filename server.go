@@ -64,6 +64,38 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
+// wisdom handler
+// get wisdom from specified psikolog id
+// GET /v0/wisdom?psikolog_id=12
+func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	psikologID := r.FormValue("psikolog_id")
+	if psikologID != "" {
+		wp, err := db.GetWisdomPointByID(psikologID)
+		if err != nil {
+			return &apiError{
+				"wisdomHandler GetWisdomPointById",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode(wp)
+		if err != nil {
+			return &apiError{
+				"wisdomHandler GetWisdomPointById encode JSON",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+		return nil
+	}
+	fmt.Fprintln(w, "200 OK")
+	return nil
+}
+
 // reportHandler handle report endpoint
 func reportHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	if r.Method != "POST" {
@@ -299,6 +331,9 @@ func main() {
 	// insert data to psikologs table
 	// POST /v0/psikolog
 	r.Handle("/v0/psikologs", ApiHandler(psikologHandler))
+
+	// get a wisdom from psikolog id
+	r.Handle("/v0/wisdom", ApiHandler(wisdomHandler))
 
 	// insert data to posts table
 	// POST /v0/posts

@@ -22,6 +22,8 @@ var (
 	stmtInsertReport   *sql.Stmt
 
 	stmtGetAllPosts *sql.Stmt
+
+	stmtGetWisdomPointByID *sql.Stmt
 )
 
 type User struct {
@@ -37,7 +39,7 @@ type Psikolog struct {
 	Email    string `json:"psikolog_email"`
 	Name     string `json:"psikolog_name"`
 	ImageURL string `json:"psikolog_image_url"`
-	Wisdom   int    `json:"psikolog_wisdom"`
+	Wisdom   int    `json:"psikolog_wisdom,string"`
 	Bio      string `json:"psikolog_bio"`
 }
 
@@ -72,6 +74,11 @@ type Database struct {
 	Conn *sql.DB
 }
 
+type WisdomPoint struct {
+	PsikologID string `json:"psikolog_id"`
+	Point      string `json:"psikolog_wisdom_point"`
+}
+
 func New() (*Database, error) {
 	db, err := sql.Open("postgres", DATABASE_URL)
 	if err != nil {
@@ -85,7 +92,7 @@ func New() (*Database, error) {
 	}
 
 	// insert psikolog statement
-	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_bio) VALUES ($1,$2,$3,$4)`)
+	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_wisdom, psikolog_bio) VALUES ($1,$2,$3,$4,$5)`)
 	if err != nil {
 		log.Printf("Error insert psikolog statement: %v\n", err)
 	}
@@ -112,6 +119,12 @@ func New() (*Database, error) {
 	stmtGetAllPosts, err = db.Prepare(`SELECT * FROM posts`)
 	if err != nil {
 		log.Printf("Error get all posts statement: %v\n", err)
+	}
+
+	// get all posts
+	stmtGetWisdomPointByID, err = db.Prepare(`SELECT psikolog_wisdom FROM psikologs WHERE psikolog_id=$1`)
+	if err != nil {
+		log.Printf("Error get all get wisdom point by ID statement: %v\n", err)
 	}
 
 	return &Database{db}, nil
@@ -185,4 +198,14 @@ func (db *Database) GetAllPosts() ([]Post, error) {
 		posts = append(posts, post)
 	}
 	return posts, nil
+}
+
+func (db *Database) GetWisdomPointByID(id string) (WisdomPoint, error) {
+	var wisdom WisdomPoint
+	wisdom.PsikologID = id
+	err := stmtGetWisdomPointByID.QueryRow(id).Scan(&wisdom.Point)
+	if err != nil {
+		return wisdom, err
+	}
+	return wisdom, nil
 }

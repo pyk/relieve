@@ -3,6 +3,17 @@
 ## Development
 
 1. setup postgres database with the following [schema][schema]
+    
+    sudo su - postgres
+    createuser -P relieve
+    createdb -O relieve relieve
+
+    note:
+    update pg_hba.conf from
+    local  all      all          peer
+    to
+    local  all      all          md5
+
 
 2. export port and datatabase environment variable
     

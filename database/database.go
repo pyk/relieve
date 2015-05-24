@@ -24,6 +24,8 @@ var (
 	stmtGetAllPosts *sql.Stmt
 
 	stmtGetWisdomPointByID *sql.Stmt
+	stmtCheckWisdomPoint   *sql.Stmt
+	stmtInsertWisdomPoint  *sql.Stmt
 )
 
 type User struct {
@@ -75,8 +77,17 @@ type Database struct {
 }
 
 type WisdomPoint struct {
+	UserID     int `json:"user_id"`
+	PsikologID int `json:"psikolog_id"`
+}
+
+type PsikologPoint struct {
 	PsikologID string `json:"psikolog_id"`
 	Point      string `json:"psikolog_wisdom_point"`
+}
+
+type WisdomPointStatus struct {
+	Status string `json:"wisdom_point_status"`
 }
 
 func New() (*Database, error) {
@@ -121,12 +132,20 @@ func New() (*Database, error) {
 		log.Printf("Error get all posts statement: %v\n", err)
 	}
 
-	// get all posts
-	stmtGetWisdomPointByID, err = db.Prepare(`SELECT psikolog_wisdom FROM psikologs WHERE psikolog_id=$1`)
+	// get the sum of psikolog wisdom points
+	stmtGetWisdomPointByID, err = db.Prepare(`SELECT SUM(wisdom_point) FROM wisdom_points WHERE wisdom_psikolog_id=$1`)
 	if err != nil {
-		log.Printf("Error get all get wisdom point by ID statement: %v\n", err)
+		log.Printf("Error get wisdom point by ID statement: %v\n", err)
 	}
-
+	// check wisdom point if exists
+	stmtCheckWisdomPoint, err = db.Prepare(`SELECT EXISTS(SELECT 1 FROM wisdom_points WHERE wisdom_user_id=$1 AND wisdom_psikolog_id=$2)`)
+	if err != nil {
+		log.Printf("Error check wisdom point statement: %v\n", err)
+	}
+	stmtInsertWisdomPoint, err = db.Prepare(`INSERT INTO wisdom_points(wisdom_user_id,wisdom_psikolog_id) VALUES ($1,$2)`)
+	if err != nil {
+		log.Printf("Error insert wisdom point statement: %v\n", err)
+	}
 	return &Database{db}, nil
 }
 
@@ -200,12 +219,32 @@ func (db *Database) GetAllPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func (db *Database) GetWisdomPointByID(id string) (WisdomPoint, error) {
-	var wisdom WisdomPoint
-	wisdom.PsikologID = id
-	err := stmtGetWisdomPointByID.QueryRow(id).Scan(&wisdom.Point)
+// GetWisdomPointByID return the sum of psikolog wisdom point
+func (db *Database) GetWisdomPointByID(id string) (PsikologPoint, error) {
+	var p PsikologPoint
+	p.PsikologID = id
+	err := stmtGetWisdomPointByID.QueryRow(id).Scan(&p.Point)
 	if err != nil {
-		return wisdom, err
+		return p, err
 	}
-	return wisdom, nil
+	return p, nil
+}
+
+// CheckWisdomPoint return a WisdomPointStatus if record exists.
+func (db *Database) CheckWisdomPoint(user_id string, psikolog_id string) (WisdomPointStatus, error) {
+	var ws WisdomPointStatus
+	err := stmtCheckWisdomPoint.QueryRow(user_id, psikolog_id).Scan(&ws.Status)
+	if err != nil {
+		return ws, err
+	}
+	return ws, nil
+}
+
+// InsertWisdomPoint insert new records on wisdom_points table.
+func (db *Database) InsertWisdomPoint(w *WisdomPoint) error {
+	_, err := stmtInsertWisdomPoint.Exec(w.UserID, w.PsikologID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

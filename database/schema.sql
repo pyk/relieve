@@ -46,3 +46,17 @@ CREATE TABLE IF NOT EXISTS reports (
     report_user_id integer REFERENCES users(user_id) ON DELETE CASCADE,
     report_post_id integer REFERENCES posts(post_id)  ON DELETE CASCADE
 );
+
+-- Wisdom
+-- cek the sum of psikolog wisdom points
+-- SELECT SUM(wisdom_point) FROM wisdom_points WHERE wisdom_psikolog_id=1;
+-- cek if record exists
+-- SELECT EXISTS(SELECT 1 FROM wisdom_points WHERE wisdom_user_id=1 AND wisdom_psikolog_id=5);
+-- insert into table
+-- INSERT INTO wisdom_points(wisdom_user_id,wisdom_psikolog_id) VALUES (1,1);
+CREATE TABLE IF NOT EXISTS wisdom_points (
+    wisdom_point integer DEFAULT 10,
+    wisdom_user_id integer REFERENCES users(user_id) ON DELETE CASCADE,
+    wisdom_psikolog_id integer REFERENCES psikologs(psikolog_id) ON DELETE CASCADE,
+    UNIQUE(wisdom_user_id, wisdom_psikolog_id)
+);

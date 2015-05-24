@@ -64,10 +64,84 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
-// wisdom handler
-// get wisdom from specified psikolog id
+// checkWisdomHandler handle a GET request to check status of wisdom.
+// if user already give a piskolog wisdom point then return
+// {"wisdom_point_status":"false"}
+// otherwise return
+// {"wisdom_point_status":"true"}
+// GET /v0/checkwisdom?psikolog_id=12&user_id=1
+func checkWisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	psikologID := r.FormValue("psikolog_id")
+	userID := r.FormValue("user_id")
+	if psikologID != "" && userID != "" {
+		s, err := db.CheckWisdomPoint(userID, psikologID)
+		if err != nil {
+			return &apiError{
+				"checkWisdomHandler CheckWisdomPoint",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode(s)
+		if err != nil {
+			return &apiError{
+				"checkWisdomHandler CheckWisdomPoint encode JSON",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+		return nil
+	}
+
+	fmt.Fprintln(w, "200 OK")
+	return nil
+}
+
+// wisdomHandler handle a GET & POST request to get wisdom point of psikolog
+// and insert new wisdom point.
 // GET /v0/wisdom?psikolog_id=12
+// POST /v0/wisdom ; with data: {"user_id": 1, "psikolog_id": 1}
 func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	// insert new wisdom point
+	if r.Method == "POST" {
+		var wp *database.WisdomPoint
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&wp)
+		if err != nil {
+			return &apiError{
+				"wisdomHandler Decode",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+
+		// insert data to database
+		err = db.InsertWisdomPoint(wp)
+		if err != nil {
+			if err.Error() == "pq: duplicate key value violates unique constraint \"wisdom_points_wisdom_user_id_wisdom_psikolog_id_key\"" {
+				return &apiError{
+					"wisdomHandler db.InsertWisdomPoint",
+					err,
+					"Bad request. Record exists.",
+					http.StatusBadRequest,
+				}
+			}
+			return &apiError{
+				"wisdomHandler db.InsertWisdomPoint",
+				err,
+				"Internal server error",
+				http.StatusInternalServerError,
+			}
+		}
+		return nil
+	}
+
+	// get psikolog wisdom point
 	psikologID := r.FormValue("psikolog_id")
 	if psikologID != "" {
 		wp, err := db.GetWisdomPointByID(psikologID)
@@ -92,6 +166,7 @@ func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
 		}
 		return nil
 	}
+
 	fmt.Fprintln(w, "200 OK")
 	return nil
 }
@@ -332,8 +407,9 @@ func main() {
 	// POST /v0/psikolog
 	r.Handle("/v0/psikologs", ApiHandler(psikologHandler))
 
-	// get a wisdom from psikolog id
+	// get & post a wisdom points
 	r.Handle("/v0/wisdom", ApiHandler(wisdomHandler))
+	r.Handle("/v0/checkwisdom", ApiHandler(checkWisdomHandler))
 
 	// insert data to posts table
 	// POST /v0/posts

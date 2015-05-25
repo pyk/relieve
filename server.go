@@ -33,6 +33,8 @@ type apiError struct {
 type ApiHandler func(w http.ResponseWriter, r *http.Request) *apiError
 
 func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// for response need an array. requested by @fachrian
+	var errs []*apiError
 
 	// add header on every response
 	w.Header().Add("Server", "Relieve by Sunday Code")
@@ -41,6 +43,7 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if handler return an &apiError
 	err := api(w, r)
+	errs = append(errs, err)
 	if err != nil {
 		// http log
 		log.Printf("%s %s %s [%s] %s", r.RemoteAddr, r.Method, r.URL, err.Tag, err.Error)
@@ -50,7 +53,7 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// response JSON
 		resp := json.NewEncoder(w)
-		err_json := resp.Encode(err)
+		err_json := resp.Encode(errs)
 		if err_json != nil {
 			log.Println("Encode JSON for error response was failed.")
 
@@ -71,6 +74,9 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // {"wisdom_point_status":"true"}
 // GET /v0/checkwisdom?psikolog_id=12&user_id=1
 func checkWisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	// response should be an array.
+	var status []database.WisdomPointStatus
+
 	psikologID := r.FormValue("psikolog_id")
 	userID := r.FormValue("user_id")
 	if psikologID != "" && userID != "" {
@@ -85,7 +91,8 @@ func checkWisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
 		}
 
 		enc := json.NewEncoder(w)
-		err = enc.Encode(s)
+		status = append(status, s)
+		err = enc.Encode(status)
 		if err != nil {
 			return &apiError{
 				"checkWisdomHandler CheckWisdomPoint encode JSON",
@@ -143,6 +150,8 @@ func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
 
 	// get psikolog wisdom point
 	psikologID := r.FormValue("psikolog_id")
+	// response should be an array
+	var psikolog_points []database.PsikologPoint
 	if psikologID != "" {
 		wp, err := db.GetWisdomPointByID(psikologID)
 		if err != nil {
@@ -154,8 +163,9 @@ func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
 			}
 		}
 
+		psikolog_points = append(psikolog_points, wp)
 		enc := json.NewEncoder(w)
-		err = enc.Encode(wp)
+		err = enc.Encode(psikolog_points)
 		if err != nil {
 			return &apiError{
 				"wisdomHandler GetWisdomPointById encode JSON",

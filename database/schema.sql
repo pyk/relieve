@@ -1,4 +1,5 @@
 -- User
+-- INSERT INTO users(user_email, user_gender, user_age, user_profession) VALUES ('test1', 'test L', 18, 'test job');
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
     user_email text NOT NULL UNIQUE,
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Psikolog
+-- INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_bio) VALUES ('test1', 'test name', 'test image', 'tst bio');
 CREATE TABLE IF NOT EXISTS psikologs (
     psikolog_id SERIAL PRIMARY KEY,
     psikolog_email text NOT NULL UNIQUE,
@@ -53,7 +55,7 @@ CREATE TABLE IF NOT EXISTS reports (
 -- cek if record exists
 -- SELECT EXISTS(SELECT 1 FROM wisdom_points WHERE wisdom_user_id=1 AND wisdom_psikolog_id=5);
 -- insert into table
--- INSERT INTO wisdom_points(wisdom_user_id,wisdom_psikolog_id) VALUES (1,1);
+-- INSERT INTO wisdom_points(wisdom_user_id,wisdom_psikolog_id) VALUES (1,1);   
 CREATE TABLE IF NOT EXISTS wisdom_points (
     wisdom_point integer DEFAULT 10,
     wisdom_user_id integer REFERENCES users(user_id) ON DELETE CASCADE,

@@ -67,6 +67,55 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 }
 
+// get information about reliever with specified ID
+func relieverHandler(w http.ResponseWriter, r *http.Request) *apiError {
+	// get reliever ID, if not specified then return an bad request status
+	// GET /v0/reliever?reliever_id=ID
+	if r.Method == "GET" {
+		relieverID := r.FormValue("reliever_id")
+		if relieverID == "" {
+			return &apiError{
+				"relieverHandler GET",
+				errors.New("relieverHandler reliever_id not specified"),
+				"reliever_id not specified.",
+				http.StatusBadRequest,
+			}
+		}
+		r, err := db.GetPsikologByID(relieverID)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				return &apiError{
+					"relieverHandler GET",
+					err,
+					"reliever_id not exists",
+					http.StatusBadRequest,
+				}
+			}
+			return &apiError{
+				"relieverHandler GET",
+				err,
+				"Bad request",
+				http.StatusBadRequest,
+			}
+		}
+		var rs []database.Reliever
+		enc := json.NewEncoder(w)
+		rs = append(rs, r)
+		err = enc.Encode(rs)
+		if err != nil {
+			return &apiError{
+				"relieverHandler Encode",
+				err,
+				"Encoding JSON failed",
+				http.StatusInternalServerError,
+			}
+		}
+
+		return nil
+	}
+	return nil
+}
+
 // checkWisdomHandler handle a GET request to check status of wisdom.
 // if user already give a piskolog wisdom point then return
 // {"wisdom_point_status":"false"}
@@ -412,6 +461,9 @@ func main() {
 	// insert data to users table
 	// POST /v0/users
 	r.Handle("/v0/users", ApiHandler(userHandler))
+
+	// reliever handler
+	r.Handle("/v0/reliever", ApiHandler(relieverHandler))
 
 	// insert data to psikologs table
 	// POST /v0/psikolog

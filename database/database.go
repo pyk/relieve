@@ -15,17 +15,19 @@ var (
 
 // statement
 var (
-	stmtInsertUser     *sql.Stmt
-	stmtInsertPsikolog *sql.Stmt
-	stmtInsertPost     *sql.Stmt
-	stmtInsertComment  *sql.Stmt
-	stmtInsertReport   *sql.Stmt
+	stmtInsertUser    *sql.Stmt
+	stmtInsertPost    *sql.Stmt
+	stmtInsertComment *sql.Stmt
+	stmtInsertReport  *sql.Stmt
 
 	stmtGetAllPosts *sql.Stmt
 
 	stmtGetWisdomPointByID *sql.Stmt
 	stmtCheckWisdomPoint   *sql.Stmt
 	stmtInsertWisdomPoint  *sql.Stmt
+
+	stmtGetPsikologByID *sql.Stmt
+	stmtInsertPsikolog  *sql.Stmt
 )
 
 type User struct {
@@ -90,6 +92,12 @@ type WisdomPointStatus struct {
 	Status string `json:"wisdom_point_status"`
 }
 
+// response /v0/reliever?reliever_id=1
+type Reliever struct {
+	Name string `json:"reliever_name"`
+	Bio  string `json:"reliever_bio"`
+}
+
 func New() (*Database, error) {
 	db, err := sql.Open("postgres", DATABASE_URL)
 	if err != nil {
@@ -102,10 +110,16 @@ func New() (*Database, error) {
 		log.Printf("Error insert user statement: %v\n", err)
 	}
 
+	// Psikolog/reliever
 	// insert psikolog statement
 	stmtInsertPsikolog, err = db.Prepare(`INSERT INTO psikologs(psikolog_email, psikolog_name, psikolog_image_url, psikolog_wisdom, psikolog_bio) VALUES ($1,$2,$3,$4,$5)`)
 	if err != nil {
 		log.Printf("Error insert psikolog statement: %v\n", err)
+	}
+	// get psikolog by ID
+	stmtGetPsikologByID, err = db.Prepare(`SELECT psikolog_name, psikolog_bio FROM psikologs WHERE psikolog_id=$1`)
+	if err != nil {
+		log.Printf("Error stmtGetPsikologByID: %v\n", err)
 	}
 
 	// insert post statement
@@ -247,4 +261,16 @@ func (db *Database) InsertWisdomPoint(w *WisdomPoint) error {
 		return err
 	}
 	return nil
+}
+
+// psikolog
+// GetPsikologByID get psikolog data with specified psikolog_id.
+// return Reliever if only if error is nil.
+func (db *Database) GetPsikologByID(psikolog_id string) (Reliever, error) {
+	var r Reliever
+	err := stmtGetPsikologByID.QueryRow(psikolog_id).Scan(&r.Name, &r.Bio)
+	if err != nil {
+		return r, err
+	}
+	return r, nil
 }

@@ -81,7 +81,7 @@ func relieverHandler(w http.ResponseWriter, r *http.Request) *apiError {
 				http.StatusBadRequest,
 			}
 		}
-		r, err := db.GetPsikologByID(relieverID)
+		rl, err := db.GetPsikologByID(relieverID)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				return &apiError{
@@ -98,10 +98,10 @@ func relieverHandler(w http.ResponseWriter, r *http.Request) *apiError {
 				http.StatusBadRequest,
 			}
 		}
-		var rs []database.Reliever
+		var rls []database.Reliever
 		enc := json.NewEncoder(w)
-		rs = append(rs, r)
-		err = enc.Encode(rs)
+		rls = append(rls, rl)
+		err = enc.Encode(rls)
 		if err != nil {
 			return &apiError{
 				"relieverHandler Encode",
@@ -298,17 +298,38 @@ func commentHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	return nil
 }
 
-// postHandler handle post endpoint
+// postHandler handle post endpoint.
+// * get list of posts by user with specified ID
 func postHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	var p *database.Post
 	var posts []database.Post
 	var err error
 
+	// GET /v0/posts?user_id=ID
+	// TODO: use regex to handle params. make sure input integer.
+	// if inpit is plain string it make a server panic.
 	if r.Method == "GET" {
-		posts, err = db.GetAllPosts()
-		if err != nil {
+		userID := r.FormValue("user_id")
+		if userID == "" {
 			return &apiError{
-				"postHandler GetAllPosts",
+				"postHandler GET",
+				errors.New("postHandler user_id not specified"),
+				"user_id not specified.",
+				http.StatusBadRequest,
+			}
+		}
+		posts, err = db.GetAllPostsByUserID(userID)
+		if err != nil {
+			if err.Error() == "cannot found a list of posts" {
+				return &apiError{
+					"postHandler GET",
+					err,
+					err.Error(),
+					http.StatusNotFound,
+				}
+			}
+			return &apiError{
+				"postHandler GET",
 				err,
 				"Internal server error",
 				http.StatusInternalServerError,

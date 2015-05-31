@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -20,7 +21,7 @@ var (
 	stmtInsertComment *sql.Stmt
 	stmtInsertReport  *sql.Stmt
 
-	stmtGetAllPosts *sql.Stmt
+	stmtGetAllPostsByUserID *sql.Stmt
 
 	stmtGetWisdomPointByID *sql.Stmt
 	stmtCheckWisdomPoint   *sql.Stmt
@@ -140,10 +141,10 @@ func New() (*Database, error) {
 		log.Printf("Error insert report statement: %v\n", err)
 	}
 
-	// get all posts
-	stmtGetAllPosts, err = db.Prepare(`SELECT * FROM posts`)
+	// get all posts by user ID
+	stmtGetAllPostsByUserID, err = db.Prepare(`SELECT * FROM posts WHERE post_user_id=$1`)
 	if err != nil {
-		log.Printf("Error get all posts statement: %v\n", err)
+		log.Printf("Error stmtGetAllPostsByUserID: %v\n", err)
 	}
 
 	// get the sum of psikolog wisdom points
@@ -213,13 +214,16 @@ func (db *Database) InsertReport(r *Report) error {
 	return nil
 }
 
-func (db *Database) GetAllPosts() ([]Post, error) {
+func (db *Database) GetAllPostsByUserID(userID string) ([]Post, error) {
 	var posts []Post
-	rows, err := stmtGetAllPosts.Query()
+	rows, err := stmtGetAllPostsByUserID.Query(userID)
 	defer rows.Close()
 	if err != nil {
 		log.Printf("Error while get data all posts: %v\n", err)
 		return nil, err
+	}
+	if !rows.Next() {
+		return nil, errors.New("cannot found a list of posts")
 	}
 	for rows.Next() {
 		var post Post

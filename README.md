@@ -34,50 +34,6 @@
 
 4. start testing endpoint
 
-## Testing endpoint
-
-1. users endpoint
-    
-    ```
-    curl -i -H "Accept: application/json" -X POST -d '{"user_email":"test", "user_gender":"male", "user_age":17, "user_profession":"student"}' http://localhost:8080/v0/users
-    ```
-
-2. psikolog endpoint
-    
-    ```
-    curl -i -H "Accept: application/json" -X POST \
-    -d '{"psikolog_email":"test", "psikolog_name":"Prof. huru hara", "psikolog_image_url":"", "psikolog_wisdom":"500", "psikolog_bio":"biography"}'\
-    http://localhost:8080/v0/psikologs
-    ```
-
-3. post endpoint
-    
-    ```
-    curl -i -H "Accept: application/json" -X POST -d '{"post_user_id":1, "post_psikolog_id":1, "post_title":"curhat nih", "post_category":"curhat", "post_content": "sample content", "post_image_url":""}' http://localhost:4000/v0/posts
-    ```
-
-4. comment endpoint
-    
-    ```
-    curl -i -H "Accept: application/json" -X POST -d '{"comment_user_id":1, "comment_psikolog_id":1, "comment_post_id":1, "comment_text":"sample comment"}' http://localhost:8080/v0/comments
-    ```
-
-5. report endpoint
-
-    ```
-    curl -i -H "Accept: application/json" -X POST -d '{"report_user_id":1, "report_post_id":1}' http://localhost:4000/v0/reports
-    ```
-
-6. wisdom endpoint
-    
-    ```
-    curl -i -H "Accept: application/json" -X POST -d '{"user_id":1, "psikolog_id":1}' http://localhost:4000/v0/wisdom
-
-    curl -i -H "Accept: application/json" -X GET http://localhost:4000/v0/cekwisdom?psikolog_id=1&user_id=1
-
-    curl -i -H "Accept: application/json" -X GET http://localhost:4000/v0/wisdom?psikolog_id=1
-    ```
-
 ## Deploy to heroku
 
 Create app with custom buildpack

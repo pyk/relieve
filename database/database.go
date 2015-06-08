@@ -50,8 +50,8 @@ type Psikolog struct {
 
 type Post struct {
 	Id          int        `json:"post_id"`
-	UserId      int        `json:"post_user_id"`
-	PsikologId  int        `json:"post_psikolog_id"`
+	UserId      string     `json:"post_user_id"`
+	PsikologId  string     `json:"post_psikolog_id"`
 	Date        *time.Time `json:"post_date"`
 	Title       string     `json:"post_title"`
 	Category    string     `json:"post_category"`
@@ -124,7 +124,7 @@ func New() (*Database, error) {
 	}
 
 	// insert post statement
-	stmtInsertPost, err = db.Prepare(`INSERT INTO posts(post_user_id, post_psikolog_id, post_title, post_category, post_content, post_image_url) VALUES ($1,$2,$3,$4,$5,$6)`)
+	stmtInsertPost, err = db.Prepare(`INSERT INTO posts(post_user_id, post_psikolog_id, post_title, post_category, post_content) VALUES ($1,$2,$3,$4,$5)`)
 	if err != nil {
 		log.Printf("Error insert post statement: %v\n", err)
 	}
@@ -186,7 +186,7 @@ func (db *Database) InsertPsikolog(p *Psikolog) error {
 
 func (db *Database) InsertPost(p *Post) error {
 	// insert data to database
-	_, err := stmtInsertPost.Exec(p.UserId, p.PsikologId, p.Title, p.Category, p.Content, p.ImageURL)
+	_, err := stmtInsertPost.Exec(p.UserId, p.PsikologId, p.Title, p.Category, p.Content)
 	if err != nil {
 		log.Printf("Error while insert data to posts table: %v\n", err)
 		return err

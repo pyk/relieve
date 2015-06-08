@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS posts (
     post_title text,
     post_category text,
     post_content text,
-    post_image_url text,
+    post_image_url text DEFAULT '',
     post_report_count integer DEFAULT 0
 );
 

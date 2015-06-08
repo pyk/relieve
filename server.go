@@ -29,6 +29,13 @@ type apiError struct {
 	Code    int    `json:"code"`
 }
 
+type StatusRequest struct {
+	Status bool `json:"status"`
+}
+
+var successReq = StatusRequest{true}
+var failureReq = StatusRequest{false}
+
 // ApiHandler global API mux
 type ApiHandler func(w http.ResponseWriter, r *http.Request) *apiError
 
@@ -226,7 +233,6 @@ func wisdomHandler(w http.ResponseWriter, r *http.Request) *apiError {
 		return nil
 	}
 
-	fmt.Fprintln(w, "200 OK")
 	return nil
 }
 
@@ -298,10 +304,10 @@ func commentHandler(w http.ResponseWriter, r *http.Request) *apiError {
 	return nil
 }
 
-// postHandler handle post endpoint.
+// postHandler handle a post endpoint.
 // * get list of posts by user with specified ID
+// * post a curhat
 func postHandler(w http.ResponseWriter, r *http.Request) *apiError {
-	var p *database.Post
 	var posts []database.Post
 	var err error
 
@@ -348,29 +354,59 @@ func postHandler(w http.ResponseWriter, r *http.Request) *apiError {
 
 		return nil
 	}
+
+	// TODO: nyelesain endpoint post for POST
+	// POST /v0/posts
+	// data: user_id, psikolog_id, title, category, content
 	if r.Method == "POST" {
-		// read data from POST request and decode data to *database.Post type
-		decoder := json.NewDecoder(r.Body)
-		err = decoder.Decode(&p)
+		// save data from params
+		userID := r.FormValue("user_id")
+		psikologID := r.FormValue("psikolog_id")
+		title := r.FormValue("title")
+		category := r.FormValue("category")
+		content := r.FormValue("content")
+
+		// all params should not empty
+		if userID == "" || psikologID == "" || title == "" || category == "" || content == "" {
+			return &apiError{
+				"postHandler POST",
+				errors.New("data incomplete"),
+				"POST data incomplete",
+				http.StatusNotAcceptable,
+			}
+		}
+		p := database.Post{
+			UserId:     userID,
+			PsikologId: psikologID,
+			Title:      title,
+			Category:   category,
+			Content:    content,
+		}
+
+		// insert data to database
+		// TODO: cari tahu kemungkinan error nya apa aja
+		err = db.InsertPost(&p)
 		if err != nil {
 			return &apiError{
-				"postHandler Decode",
+				"postHandler db.InsertPost",
+				err,
+				"Internal server error. Cannot insert data to database",
+				http.StatusInternalServerError,
+			}
+		}
+
+		// send a success message
+		enc := json.NewEncoder(w)
+		err = enc.Encode(successReq)
+		if err != nil {
+			return &apiError{
+				"postHandler POST encode JSON",
 				err,
 				"Internal server error",
 				http.StatusInternalServerError,
 			}
 		}
 
-		// insert data to database
-		err = db.InsertPost(p)
-		if err != nil {
-			return &apiError{
-				"postHandler db.InsertPost",
-				err,
-				"Internal server error",
-				http.StatusInternalServerError,
-			}
-		}
 		return nil
 	}
 
